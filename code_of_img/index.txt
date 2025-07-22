@@ -1,0 +1,25 @@
+1. 实时解析代码生成时序图等的在线网站
+https://mermaid.live/edit#pako
+
+
+
+2 各种图的code
+
+2.1 实时识别的时序图
+```sequenceDiagram
+participant H5 as H5/小程序
+participant Java as Java Server
+participant Python as Python Server
+
+    H5->>Java: WS连接建立(带鉴权token)
+    Java-->>H5: 认证结果
+    loop 语音采集
+        H5->>Java: 发送二进制音频分片(WS)
+        Java->>Java: 权限控制/流量控制/格式校验
+        Java->>Python: gRPC流式传输音频
+        Python->>Python: 实时语音识别
+        Python->>Java: 实时返回文字结果
+        Java->>H5: 转发识别结果(WS)
+    end
+```
+

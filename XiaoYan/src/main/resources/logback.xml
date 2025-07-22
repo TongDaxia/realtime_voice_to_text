@@ -1,0 +1,8 @@
+<configuration>
+    <logger name="io.netty" level="INFO"/>
+
+    <!-- 其他日志配置 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

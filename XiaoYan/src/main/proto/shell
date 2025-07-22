@@ -1,0 +1,5 @@
+protoc \
+  --plugin=protoc-gen-grpc-java=./protoc-gen-grpc-java \
+  --java_out=./out \
+  --grpc-java_out=./out \
+  speech.proto
