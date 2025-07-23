@@ -1,7 +1,7 @@
 package com.tyg.speech;
 
 import com.tyg.speech.config.AppConfig;
-import com.tyg.speech.handler.AuthHandler;
+import com.tyg.speech.handler.CorsHandler;
 import com.tyg.speech.handler.HttpRequestHandler;
 import com.tyg.speech.handler.SpeechWebSocketHandler;
 import io.netty.bootstrap.ServerBootstrap;
@@ -17,7 +17,9 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class SpeechServer {
     private final int port;
     private final AppConfig config;
@@ -28,9 +30,8 @@ public class SpeechServer {
     }
 
     public void run() throws Exception {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        EventLoopGroup bossGroup = new NioEventLoopGroup(4);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
@@ -43,10 +44,11 @@ public class SpeechServer {
                      
                      // HTTP编解码器
                      pipeline.addLast(new HttpServerCodec());
-                     pipeline.addLast(new HttpObjectAggregator(6665536));//65536
+                     pipeline.addLast(new CorsHandler());
+                     pipeline.addLast(new HttpObjectAggregator(5*1024*1024));//5M
                      
                      // 认证处理器
-                     pipeline.addLast(new AuthHandler(config));
+//                     pipeline.addLast(new AuthHandler(config));
                      
                      // WebSocket处理器
                      pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
@@ -60,7 +62,7 @@ public class SpeechServer {
              });
 
             Channel ch = b.bind(port).sync().channel();
-            System.out.println("WebSocket server started at port " + port);
+            log.info("WebSocket server started at port:{} ", port);
             ch.closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();

@@ -7,7 +7,9 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.ReferenceCountUtil;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class AuthHandler extends ChannelInboundHandlerAdapter {
     private final AppConfig config;
 
@@ -20,10 +22,16 @@ public class AuthHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
             HttpHeaders headers = request.headers();
-            
+            String uri = request.getUri();
+            log.info("收到完整请求，uri:{}", uri);
+//            log.info("收到完整请求，HTTP头:{}", headers);
+
             String authToken = headers.get("X-Auth-Token");
             if (config.getAuthToken().equals(authToken)) {
                 // 认证通过，继续处理
+                LogUtils.logAuthSuccess(ctx.channel().remoteAddress().toString());
+                super.channelRead(ctx, msg);
+            } else if (uri.contains(config.getAuthToken())) {
                 LogUtils.logAuthSuccess(ctx.channel().remoteAddress().toString());
                 super.channelRead(ctx, msg);
             } else {
