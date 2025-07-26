@@ -15,7 +15,6 @@ public class AppConfig {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("application.properties")) {
             if (input == null) {
                 log.info("无法找到 application.properties 文件");
-                // 使用默认值或抛出更具体的异常
                 initializeDefaults();
                 return;
             }
@@ -28,7 +27,7 @@ public class AppConfig {
     private void initializeDefaults() {
         props.setProperty("server.port", "8080");
         props.setProperty("auth.token", "11223333");
-        props.setProperty("python.rpc.host", "localhost");
+        props.setProperty("python.rpc.host", "[::1]");
         props.setProperty("python.rpc.port", "50051");
         props.setProperty("log.path", "logs/speech_server.log");
     }
@@ -43,7 +42,7 @@ public class AppConfig {
     }
 
     public String getPythonRpcHost() {
-        return props.getProperty("python.rpc.host", "localhost");
+        return props.getProperty("python.rpc.host", "[::1]");
     }
 
     public int getPythonRpcPort() {

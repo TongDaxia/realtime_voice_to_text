@@ -1,0 +1,30 @@
+# 更新系统并安装编译依赖
+sudo yum update -y
+sudo yum install -y epel-release  # CentOS 7 需要 EPEL 仓库
+sudo yum install -y gcc make wget
+
+
+
+# 下载源码包
+wget https://download.redis.io/releases/redis-7.2.4.tar.gz
+tar xzf redis-7.2.4.tar.gz
+cd redis-7.2.4
+
+# 编译安装
+make
+sudo make install  # 默认安装到 /usr/local/bin
+
+
+# 创建配置和数据目录
+sudo mkdir -p /etc/redis /var/lib/redis
+
+# 复制默认配置文件
+sudo cp redis.conf /etc/redis/redis.conf
+
+# 修改配置文件
+sudo vi /etc/redis/redis.conf
+
+
+sudo systemctl daemon-reload
+sudo systemctl start redis
+sudo systemctl enable redis
