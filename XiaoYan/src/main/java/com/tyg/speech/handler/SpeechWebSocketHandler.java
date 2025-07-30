@@ -9,18 +9,40 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.TooLongFrameException;
-import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SpeechWebSocketHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
 
     private final Logger logger = LoggerFactory.getLogger(SpeechWebSocketHandler.class);
     private final AppConfig config;
-    private final ExecutorService executor = Executors.newCachedThreadPool(); // 可复用线程
+    private final ExecutorService executor =new ThreadPoolExecutor(
+            8, 20, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(1000),
+            new ThreadFactory() {
+                private final AtomicInteger idx = new AtomicInteger(1);
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread t = new Thread(r, "speech-ws-" + idx.getAndIncrement());
+                    t.setDaemon(false);
+                    return t;
+                }
+            },
+            new ThreadPoolExecutor.AbortPolicy()
+    );
 
     // 每个连接的状态
     private volatile BlockingQueue<byte[]> audioQueue;
@@ -50,6 +72,7 @@ public class SpeechWebSocketHandler extends SimpleChannelInboundHandler<WebSocke
                         logger.info("Starting recognizeStreaming for connection: {}", ctx.channel().remoteAddress());
                         client.recognizeStreaming(audioQueue, 16000, resp -> {
                             if (ctx.channel().isActive()) {
+                                //回写转写结果
                                 ctx.writeAndFlush(new TextWebSocketFrame(resp.getText()));
                             }
                         });

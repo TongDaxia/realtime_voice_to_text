@@ -1,8 +1,11 @@
 package com.tyg.speech.rpc;
 
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,12 +21,20 @@ public class PythonSpeechClient {
     private final SpeechGrpc.SpeechStub asyncStub;
 
     public PythonSpeechClient(String host, int port) {
-        channel = ManagedChannelBuilder.forAddress(host, port)
+        log.info("init python client：{}:{}",host,port);
+
+//        channel = ManagedChannelBuilder.forAddress(host,port)
+//                .usePlaintext()
+//                .build();
+
+        EventLoopGroup group = new NioEventLoopGroup();
+        channel = NettyChannelBuilder.forAddress(host,port)
                 .usePlaintext()
+                .channelType(NioSocketChannel.class)
+                .eventLoopGroup(group)
                 .build();
         asyncStub = SpeechGrpc.newStub(channel);
     }
-    /* 在 PythonSpeechClient 类里新增 */
     public String recognize(byte[] audioData, int sampleRate) {
         SpeechProto.SpeechRequest req = SpeechProto.SpeechRequest.newBuilder()
                 .setAudioData(com.google.protobuf.ByteString.copyFrom(audioData))

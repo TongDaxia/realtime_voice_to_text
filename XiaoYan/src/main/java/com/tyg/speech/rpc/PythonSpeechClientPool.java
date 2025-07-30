@@ -8,7 +8,7 @@ public class PythonSpeechClientPool {
     private static final BlockingQueue<PythonSpeechClient> pool =
             new ArrayBlockingQueue<>(MAX_POOL_SIZE);
 
-    public static PythonSpeechClient getClient(String host, int port) {
+    public static  PythonSpeechClient getClient(String host, int port) {
         PythonSpeechClient client = pool.poll();
         if (client == null) {
             client = new PythonSpeechClient(host, port);

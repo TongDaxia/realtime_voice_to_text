@@ -1,6 +1,7 @@
 package com.tyg.speech;
 
 import com.tyg.speech.config.AppConfig;
+import com.tyg.speech.handler.AuthHandler;
 import com.tyg.speech.handler.CorsHandler;
 import com.tyg.speech.handler.HttpRequestHandler;
 import com.tyg.speech.handler.SpeechWebSocketHandler;
@@ -41,21 +42,16 @@ public class SpeechServer {
                  @Override
                  protected void initChannel(SocketChannel ch) {
                      ChannelPipeline pipeline = ch.pipeline();
-                     
                      // HTTP编解码器
                      pipeline.addLast(new HttpServerCodec());
                      pipeline.addLast(new CorsHandler());
                      pipeline.addLast(new HttpObjectAggregator(5*1024*1024));//5M
-                     
                      // 认证处理器
-//                     pipeline.addLast(new AuthHandler(config));
-                     
+                     pipeline.addLast(new AuthHandler(config));
                      // WebSocket处理器
                      pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
-                     
                      // 自定义WebSocket处理器
                      pipeline.addLast(new SpeechWebSocketHandler(config));
-                     
                      // HTTP请求处理器
                      pipeline.addLast(new HttpRequestHandler("/ws"));
                  }
